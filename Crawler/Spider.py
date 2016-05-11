@@ -4,6 +4,7 @@
 
 import CONF
 import json
+import BloomFilter
 
 if __name__ == '__main__':
     print 'crawler runner beggin'
