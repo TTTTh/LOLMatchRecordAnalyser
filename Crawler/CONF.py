@@ -1,4 +1,4 @@
-# -*- coding:utf-8 -*-
+# -*- coding: utf-8 -*-
 # CONF.py
 
 TOP_PATH = '/volumes/ExtraData/LOLMatchRecordAnalyser/'
@@ -7,3 +7,6 @@ JSON_PATH = TOP_PATH + 'RecordJsons/'
 
 PLAYER_INFO = TOP_PATH +'PlayerInfo.json'
 COMPLETED_LIST = TOP_PATH + 'CompletedList.json'
+SEARCH_URL_PREFIX = 'http://www.laoyuegou.com/enter/search/search.html?type=lol&name='
+FIRST_PLAYER = '龙珠丶古手羽爱翘'
+ALLOWE_SERVER = ['电信一']

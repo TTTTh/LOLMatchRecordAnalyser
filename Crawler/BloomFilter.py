@@ -83,6 +83,7 @@ class BloomFilter:
                 return False
         return True
 
+'''
 #测试用函数
 def BloomTest():
     fd = open("urls.txt")
@@ -99,3 +100,4 @@ def BloomTest():
             print 'url :%s has exist' % url
 
 BloomTest()
+'''
