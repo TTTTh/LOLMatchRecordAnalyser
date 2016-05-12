@@ -5,32 +5,35 @@
 import CONF
 import json
 import SearchPlayerID
-import Sortage
+#import Storage
 import PlayerMatchAnalyser
 
 from BloomFilter import BloomFilter
+from Queue import Queue
 
-PlayerInfo = ""
+PlayerInfoFp = ""
 CompletedList = ""
-Filter = ""
-succesPlayerRecords = []
-def OpenFile(local):
+#PlayerNameFilter = ""
+#succesPlayerRecords = []
+#PlayerNameQueue = ""
+
+def OpenFile(local, tpye = 'r'):
     try:
         fp = open(local, 'r')
     except Exception, e:
         fp = open(local, 'w')
         fp.close()
-        fp = open(local, 'r')
+        fp = open(local, tpye)
     return fp
 
-def StoragePlayerRecord(PlayerInfDict):
-    global succesPlayerRecords
+def StorePlayerRecord(PlayerInfDict):
+    global PlayerInfo
     #拆解出个人信息
     oneRecord = {}
-    oneRecord['playerName'] = PlayerInfDict['playerName']
+    oneRecord['PlayerName'] = PlayerInfDict['PlayerName']
     oneRecord['PersonalRating'] = PlayerInfDict['PersonalRating']
     oneRecord['ServerName'] = PlayerInfDict['ServerName']
-    oneRecord['LocalInfPath'] = CONF.JSON_PATH + PlayerInfDict['playerName'] + '.json'
+    oneRecord['LocalInfPath'] = CONF.JSON_PATH + PlayerInfDict['PlayerName'] + '.json'
 
     #保存对局信息
     fp = open(oneRecord['LocalInfPath'], 'wb')
@@ -39,32 +42,68 @@ def StoragePlayerRecord(PlayerInfDict):
     fp.close()
 
     #将已经完成的玩家信息保存到文件里
-
+    #succesPlayerRecords.append(oneRecord)
+    line = json.dumps(oneRecord)
+    PlayerInfoFp.write(line)
 
 
 def Init():
-    global PlayerInfo
+    global PlayerInfoFp
     global CompletedList
     global Filter
+    #global PlayerNameQueue
+
     print 'Initialization begin.'
-    PlayerInfo = OpenFile(CONF.PLAYER_INFO)
+
+    #PlayerNameQueue = Queue()
+    PlayerInfoFp = open(CONF.PLAYER_INFO, 'a')
+    #PlayerInfo = OpenFile(CONF.PLAYER_INFO)
     #CompletedList = OpenFile(CONF.COMPLETED_LIST)
     #Filter = BloomFilter(0.0001, 10000000)
-    Filter = BloomFilter(0.001, 100000)
+    playerNameQueue = Queue()
+    playerNameFilter = BloomFilter(0.001, 100000)
     print 'Initialization compeleted!'
 
+    return playerNameQueue, playerNameFilter
+
 def RunningSpider(playerName = ''):
-    Init()
+    playerNameQueue, playerNameFilter = Init()
+
     if playerName == '':
         playerName = CONF.FIRST_PLAYER
-    playerMatchRecordsUrl = SearchPlayerID.SearchPlayerId(playerName)
-    #print 'Player', playerName, 'has been found!'
-    #print 'search ', playerMatchRecordsUrl
-    playerInfDict = PlayerMatchAnalyser.AnalysisRecord(playerMatchRecordsUrl, playerName)
-    if playerInfDict != None :
-        print 'player', playerName, '\'s record analyse completed'
-    else:
-        print 'player', playerName, '\'s record analyse error'
+    playerNameQueue.put(playerName)
+    playerNameFilter.insert(playerName)
+    #广度优先开始抓取
+    while playerNameQueue.empty() == False:
+        curPlayerName = playerNameQueue.get()
+        #搜索这个用户对应的网页
+        playerMatchRecordsUrl = SearchPlayerID.SearchPlayerId(curPlayerName)
+        #提取用户的战绩等等信息
+        playerInfDict = PlayerMatchAnalyser.AnalysisRecord(playerMatchRecordsUrl, curPlayerName)
+        if playerInfDict != None :
+            StorePlayerRecord(playerInfDict)
+            #print 'player', playerName, '\'s record analyse completed'
+        else:
+            print 'player', playerName, '\'s record analyse error'
+
+
+def Close():
+    #将一些信息保存到文件当中
+    #读取原信息并追加新的信息
+    playerInfoFp = OpenFile(CONF.PLAYER_INFO)
+    playerInfoFp.close()
+    originalList = json.loads(playerInfoFp.read())
+    originalList.extend(succesPlayerRecords)
+
+    #把新的信息写入文件
+    playerInfoFp = open(CONF.PLAYER_INFO, 'wb')
+    playerInfoFp.write(json.dumps(originalList))
+    playerInfDict.close()
+
+    #输出结束信息
+    print 'crawler ', len(playerInfoFp), 'player Info'
+
+
 
 
 
