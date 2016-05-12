@@ -26,26 +26,6 @@ def OpenFile(local, tpye = 'r'):
         fp = open(local, tpye)
     return fp
 
-def StorePlayerRecord(PlayerInfDict):
-    global PlayerInfo
-    #拆解出个人信息
-    oneRecord = {}
-    oneRecord['PlayerName'] = PlayerInfDict['PlayerName']
-    oneRecord['PersonalRating'] = PlayerInfDict['PersonalRating']
-    oneRecord['ServerName'] = PlayerInfDict['ServerName']
-    oneRecord['LocalInfPath'] = CONF.JSON_PATH + PlayerInfDict['PlayerName'] + '.json'
-
-    #保存对局信息
-    fp = open(oneRecord['LocalInfPath'], 'wb')
-    line = json.dumps(PlayerInfDict)
-    fp.write(line)
-    fp.close()
-
-    #将已经完成的玩家信息保存到文件里
-    #succesPlayerRecords.append(oneRecord)
-    line = json.dumps(oneRecord)
-    PlayerInfoFp.write(line)
-
 
 def Init():
     global PlayerInfoFp
@@ -66,6 +46,53 @@ def Init():
 
     return playerNameQueue, playerNameFilter
 
+
+def StorePlayerRecord(PlayerInfDict):
+    global PlayerInfo
+    #拆解出个人信息
+    oneRecord = {}
+    oneRecord['PlayerName'] = PlayerInfDict['PlayerName']
+    oneRecord['PersonalRating'] = PlayerInfDict['PersonalRating']
+    oneRecord['ServerName'] = PlayerInfDict['ServerName']
+    oneRecord['LocalInfPath'] = CONF.JSON_PATH + PlayerInfDict['PlayerName'] + '.json'
+
+    #保存对局信息
+    fp = open(oneRecord['LocalInfPath'], 'wb')
+    line = json.dumps(PlayerInfDict)
+    fp.write(line)
+    fp.close()
+
+    #将已经完成的玩家信息保存到文件里
+    #succesPlayerRecords.append(oneRecord)
+    line = json.dumps(oneRecord)
+    #print 'in storage, line =', line
+    PlayerInfoFp.write(line)
+
+
+
+#提取某一个对局中的玩家的名字
+def ExtractPlayerNameInSigleMatch(teamRecordDict):
+    playerNames = []
+    for playerRecord in teamRecordDict['PlayerRecords']:
+        playerNames.append(playerRecord['playerID'])
+    return playerNames
+
+#提取某一个玩家的记录中出现的新名字
+def ExtractFurtherPlayerName(playerInfDict, playerNameFilter):
+    recordList = playerInfDict['MatchRecord']
+    furtherPlayerName = []
+    for record in recordList:
+        #print 'analyse record'
+        tmpList = ExtractPlayerNameInSigleMatch(record)
+        for name in tmpList:
+            if playerNameFilter.exsist(name) == False:
+                playerNameFilter.insert(name)
+                furtherPlayerName.append(name)
+
+    return furtherPlayerName
+
+
+
 def RunningSpider(playerName = ''):
     playerNameQueue, playerNameFilter = Init()
 
@@ -83,9 +110,11 @@ def RunningSpider(playerName = ''):
         if playerInfDict != None :
             StorePlayerRecord(playerInfDict)
             #print 'player', playerName, '\'s record analyse completed'
+            furtherPlayerName = ExtractFurtherPlayerName(playerInfDict)
+            for name in furtherPlayerName:
+                print 'name =', name
         else:
             print 'player', playerName, '\'s record analyse error'
-
 
 def Close():
     #将一些信息保存到文件当中
