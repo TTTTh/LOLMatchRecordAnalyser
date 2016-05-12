@@ -7,16 +7,21 @@ import CONF
 from lxml import etree
 
 
+#紫色方ID /html/body/div[3]/div/div[3]/div[2]/div[2]/div[2]/div/div[2]/div[2]/div[2]/div[2]/div[2]/table/tbody/tr[2]/td[1]/div/div[2]/h6
 def ExtractPlayerRecord(playerRecord):
     playerRecordDict = {}
     chmpnName = playerRecord.xpath('./td[1]/div/div[1]/img/@title')[0]
     playerRecordDict['chmpnName'] = chmpnName
-
-    skill1 = playerRecord.xpath('./td[1]/div/div[2]/div[1]/img[1]/@src')[0]
-    skill2 = playerRecord.xpath('./td[1]/div/div[2]/div[1]/img[2]/@src')[0]
+    try:
+        skill1 = playerRecord.xpath('./td[1]/div/div[2]/div[1]/img[1]/@src')[0]
+        skill2 = playerRecord.xpath('./td[1]/div/div[2]/div[1]/img[2]/@src')[0]
+    except Exception, e:
+        skill1 = 'None'
+        skill2 = 'None'
     playerRecordDict['Skills'] = [skill1, skill2]
 
     playerID = playerRecord.xpath('./td[1]/div/div[2]/h6/a')[0].text
+    #print 'playerId =', playerID.encode('utf-8')
     playerRecordDict['PlayerId'] = playerID
 
     #计算召唤师KDA
@@ -116,13 +121,15 @@ def AnalysisRecord(playerMatchUrl, playerName):
     for record in matchRecordsInf :
         recordDict = {}
         #分析蓝队
+        #print 'when analyse blue team'
         blueRecordsDict = GetTeamRecordDict(record.xpath('./div[2]/div[1]')[0], 'blue')
         #OutputDictionary.DfsOutput(blueRecordsDict)
         #分析紫队
+        #print 'when analyse purple team'
         purpleRecordDict = GetTeamRecordDict(record.xpath('./div[2]/div[2]')[0], 'purple')
         #OutputDictionary.DfsOutput(purpleRecordDict)
         recordDict['BlueRecordsDict'] = blueRecordsDict
-        recordDict['PurpleRecordDict'] = purpleRecordDict
+        recordDict['PurpleRecordsDict'] = purpleRecordDict
         matchRecords.append(recordDict)
     playerInfDict['MatchRecord'] = matchRecords
 
