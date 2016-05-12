@@ -6,6 +6,7 @@ import CONF
 import json
 import SearchPlayerID
 #import Storage
+import Recovery
 import PlayerMatchAnalyser
 
 from BloomFilter import BloomFilter
@@ -44,11 +45,10 @@ def Init():
 
     #PlayerNameQueue = Queue()
     PlayerInfoFp = open(CONF.PLAYER_INFO, 'a')
-    #PlayerInfo = OpenFile(CONF.PLAYER_INFO)
-    #CompletedList = OpenFile(CONF.COMPLETED_LIST)
-    #Filter = BloomFilter(0.0001, 10000000)
     playerNameQueue = Queue()
-    playerNameFilter = BloomFilter(0.001, 100000)
+    playerNameFilter = BloomFilter(0.001, 1000000)
+    Recovery.RecoveryDownloadRecord(playerNameQueue, playerNameFilter)
+
     print 'Initialization compeleted!'
 
     return playerNameQueue, playerNameFilter
@@ -59,9 +59,9 @@ def StorePlayerRecord(PlayerInfDict):
     global RecordCnt
     #拆解出个人信息
     oneRecord = {}
-    oneRecord['PlayerName'] = PlayerInfDict['PlayerName']
-    oneRecord['PersonalRating'] = PlayerInfDict['PersonalRating']
-    oneRecord['ServerName'] = PlayerInfDict['ServerName']
+    oneRecord['PlayerName'] = PlayerInfDict['PlayerName'].encode('utf-8')
+    oneRecord['PersonalRating'] = PlayerInfDict['PersonalRating'].encode('utf-8')
+    oneRecord['ServerName'] = PlayerInfDict['ServerName'].encode('utf-8')
     oneRecord['LocalInfPath'] = CONF.JSON_PATH + PlayerInfDict['PlayerName'] + '.json'
 
     #保存对局信息
@@ -121,6 +121,8 @@ def RunningSpider(playerName = ''):
         print 'Player', curPlayerName.encode('utf-8'), '\' s record is being analysed!'
         #搜索这个用户对应的网页
         playerMatchRecordsUrl = SearchPlayerID.SearchPlayerId(curPlayerName)
+        if playerMatchRecordsUrl == None:
+            continue
         #提取用户的战绩等等信息
         playerInfDict = PlayerMatchAnalyser.AnalysisRecord(playerMatchRecordsUrl, curPlayerName)
         if playerInfDict != None :
